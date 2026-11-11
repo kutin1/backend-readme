@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: readme_app
+    volumes:
+      - .:/var/www
+      - storage_data:/var/www/storage
+    depends_on:
+      - mysql
+      - mailpit
+    env_file:
+      - .env.docker
+    tmpfs:
+    - /tmp
+
+  nginx:
+    image: nginx:latest
+    container_name: readme_nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www
+      - storage_data:/var/www/storage
+      - storage_data:/var/www/storage_public
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+
+  mysql:
+    image: mysql:8.0
+    container_name: readme_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: readme
+      MYSQL_USER: readme
+      MYSQL_PASSWORD: readme
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  mysql_data:
+  storage_data:
